@@ -1,0 +1,7 @@
+.vscode/
+.venv/
+data/
+target/
+.python-version
+*.safetensors
+uv.lock

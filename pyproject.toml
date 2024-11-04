@@ -1,0 +1,20 @@
+[project]
+name = "convert-nn"
+version = "0.1.0"
+description = "pytorchからcandleへの変換サンプル。"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "safetensors>=0.4.5",
+    "torch==2.5.0+cu124",
+    "torchvision==0.20.0+cu124",
+]
+
+[tool.uv.sources]
+torch = { index = "torch-cuda" }
+torchvision = { index = "torch-cuda" }
+
+[[tool.uv.index]]
+name = "torch-cuda"
+url = "https://download.pytorch.org/whl/cu124"
+explicit = true
