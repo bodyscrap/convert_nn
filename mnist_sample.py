@@ -21,7 +21,7 @@ test_dataset = datasets.MNIST(root='./data', train=False, transform=transform, d
 train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
 test_loader = DataLoader(test_dataset, batch_size=1000, shuffle=False)
 
-# CNN2層、Liniear2層の簡素な画像分類モデル
+# CNN2層、全結合層2層の簡素な画像分類モデル
 class CNN(nn.Module):
     def __init__(self):
         super(CNN, self).__init__()
@@ -33,12 +33,14 @@ class CNN(nn.Module):
         self.fc2 = nn.Linear(128, 10)
 
     def forward(self, x):
+        # CNN層
         x = self.conv1(x)
         x = F.relu(x)
         x = self.conv2(x)
         x = F.relu(x)
         x = F.max_pool2d(x, 2)
         x = self.dropout1(x)
+        # 全結合層
         x = torch.flatten(x, 1)
         x = self.fc1(x)
         x = F.relu(x)
@@ -68,6 +70,7 @@ def train(model, device, train_loader, epoch):
 def test(model, device, test_loader):
     # オプティマイザーと損失関数の設定
     model.eval()
+    print(model)
     test_loss = 0
     correct = 0
     with torch.no_grad():
