@@ -1,4 +1,4 @@
-use candle_core::{Tensor, Result, Device};
+use candle_core::{Tensor, Result};
 use candle_nn::{Module, Conv2d, Conv2dConfig, Linear, Dropout};
 use candle_nn::conv::conv2d;
 use candle_nn::linear::linear;
@@ -20,14 +20,14 @@ pub struct CNN {
 
 // メソッドの定義
 impl CNN {
-    pub fn new(vb: &mut VarBuilder) -> Result<Self> {
+    pub fn new(vb: &VarBuilder) -> Result<Self> {
         // 各層の初期化
         let conv1 = conv2d(
             1,
             32,
             3, 
             Conv2dConfig {
-                padding: 1,
+                padding: 0,
                 stride: 1,
                 dilation: 1,
                 groups:1,
@@ -38,7 +38,7 @@ impl CNN {
             64, 
             3, 
             Conv2dConfig {
-                padding: 1,
+                padding: 0,
                 stride: 1,
                 dilation: 1,
                 groups:1,

@@ -10,9 +10,10 @@ from safetensors.torch import save_file, load_file
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # データの前処理とデータローダーの設定
+# candle側に画像正規化メソッドが見当たらなかったため、
+# 読み込んだ値をそのまま使う(背景:0, 文字:1)
 transform = transforms.Compose([
     transforms.ToTensor(),
-    transforms.Normalize((0.5,), (0.5,))
 ])
 
 # torchvision.datasets.MNIST のデータセットをダウンロードし、データローダーを作成
@@ -87,7 +88,7 @@ def test(model, device, test_loader):
           f'({accuracy:.2f}%)\n')
 
 # メイン関数
-def main(mode='train', num_epochs=10, weight_name =  "mnist_cnn_weights.safetensors"):
+def main(mode='train', num_epochs=10, weight_name =  "mnist_cnn_weights", weight_type = "safetensors"): 
     if mode == 'train':
         # モデル定義
         model = CNN().to(device)
@@ -95,17 +96,23 @@ def main(mode='train', num_epochs=10, weight_name =  "mnist_cnn_weights.safetens
             train(model, device, train_loader, epoch)
             test(model, device, test_loader)
         # モデルの重みを safetensors 形式で保存
-        save_file(model.state_dict(), weight_name)
-        print("Model weights saved in mnist_cnn_weights.safetensors")
+        save_file(model.state_dict(), weight_name + ".safetensors")
+        print(f"Model weights saved in {weight_name}.safetensors")
+        torch.save(model.state_dict(), weight_name + ".pth")
+        print(f"Model weights saved in {weight_name}.pth")
     elif mode == 'eval':
         # モデル定義
         model = CNN().to(device)
         # safetensorsから重みを読み込む場合
-        model.load_state_dict(load_file(weight_name))
+        if weight_type == "safetensors":
+            model.load_state_dict(load_file(weight_name + ".safetensors"))
+        else:
+            model.load_state_dict(torch.load(weight_name + ".pth"))
         test(model, device, test_loader)
     else:
         print("Invalid mode! Choose 'train' or 'eval'.")
 
 if __name__ == '__main__':
     #main(mode = 'train', num_epochs=10) # 学習時
-    main(mode = 'eval', num_epochs = 10) # 評価時
+    #main(mode = 'eval', weight_type="safetensors") # 評価時(safetensorsから読み込み)
+    main(mode = 'eval', weight_type="pth") # 評価時(pthから読み込み)

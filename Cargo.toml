@@ -6,4 +6,5 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.92"
 candle-core = {version = "0.7.2", features = ["cuda"]}
+candle-datasets = "0.7.2"
 candle-nn = {version = "0.7.2", features = ["cuda"]}

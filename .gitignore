@@ -4,4 +4,5 @@ data/
 target/
 .python-version
 *.safetensors
+*.pth
 uv.lock
