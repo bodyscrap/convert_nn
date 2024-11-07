@@ -12,6 +12,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # データの前処理とデータローダーの設定
 # candle側に画像正規化メソッドが見当たらなかったため、
 # 読み込んだ値をそのまま使う(背景:0, 文字:1)
+# ちゃんと正規化したい場合は、transforms.Normalize()相当の実装をRustの方にも追加してそろえる
 transform = transforms.Compose([
     transforms.ToTensor(),
 ])
@@ -23,6 +24,7 @@ train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
 test_loader = DataLoader(test_dataset, batch_size=1000, shuffle=False)
 
 # CNN2層、全結合層2層の簡素な画像分類モデル
+# 比較するとcandleの実装もかなり似た書き方で揃えられているのが分かる
 class CNN(nn.Module):
     def __init__(self):
         super(CNN, self).__init__()
@@ -69,7 +71,7 @@ def train(model, device, train_loader, epoch):
 
 # テスト関数
 def test(model, device, test_loader):
-    # オプティマイザーと損失関数の設定
+    # 推論設定(backpropagationをしない)
     model.eval()
     print(model)
     test_loss = 0
@@ -89,12 +91,12 @@ def test(model, device, test_loader):
 
 # メイン関数
 def main(mode='train', num_epochs=10, weight_name =  "mnist_cnn_weights", weight_type = "safetensors"): 
+    # 基本的には最近はsafetensors形式で保存することを推奨
     if mode == 'train':
         # モデル定義
         model = CNN().to(device)
         for epoch in range(1, num_epochs + 1):
             train(model, device, train_loader, epoch)
-            test(model, device, test_loader)
         # モデルの重みを safetensors 形式で保存
         save_file(model.state_dict(), weight_name + ".safetensors")
         print(f"Model weights saved in {weight_name}.safetensors")
@@ -113,6 +115,6 @@ def main(mode='train', num_epochs=10, weight_name =  "mnist_cnn_weights", weight
         print("Invalid mode! Choose 'train' or 'eval'.")
 
 if __name__ == '__main__':
-    #main(mode = 'train', num_epochs=10) # 学習時
-    #main(mode = 'eval', weight_type="safetensors") # 評価時(safetensorsから読み込み)
-    main(mode = 'eval', weight_type="pth") # 評価時(pthから読み込み)
+    main(mode = 'train', num_epochs=10) # 学習時
+    main(mode = 'eval', weight_type="safetensors") # 評価時(safetensorsから読み込み)
+    #main(mode = 'eval', weight_type="pth") # 評価時(pthから読み込み)

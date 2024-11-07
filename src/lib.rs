@@ -21,7 +21,16 @@ pub struct CNN {
 // メソッドの定義
 impl CNN {
     pub fn new(vb: &VarBuilder) -> Result<Self> {
-        // 各層の初期化
+        // 各レイヤーの初期化
+        // PyTorchと似たような感じで書けるビルダーメソッドが定義されている
+        // Tensorのサイズ決定に関わるものは直接引数にあって、
+        // それ以外はConv2dConfigの様な構造体でまとめられている感じ。
+        // また、現時点ではRustのリファレンスを見ても何も書いて居ないが
+        // 対応するPyTorchのtorch.nnのレイヤーとパラメータ名が揃えてあるので、
+        // 各パラメータの意味やデフォルト値はPyTorchのリファレンスを参照すると良い。
+        // また、最後のパラメータはVarBuilderで
+        // パラメータロード済みのVarBUilderを階層を指定して参照することで対応するレイヤーのパラメータを抽出する。
+        // ちなみに、対応するものが無い場合は一様乱数で初期化される実装が多い模様。
         let conv1 = conv2d(
             1,
             32,
@@ -44,8 +53,10 @@ impl CNN {
                 groups:1,
             },
             vb.pp("conv2"))?;
+        // ここではDropoutは学習パラメータでないため、直接設定している。
         let dropout1 = Dropout::new(0.25);
         let dropout2 = Dropout::new(0.5);
+        // 全結合層はVarBuilderでパラメータをロードしている
         let fc1 = linear(9216, 128, vb.pp("fc1"))?;
         let fc2 = linear(128, 10, vb.pp("fc2"))?;
 
@@ -53,12 +64,17 @@ impl CNN {
     }
 
     pub fn forward(&self, xs: &Tensor, train: bool) -> Result<Tensor> {
+        // forwardネットワークの構築はPyTorchとほぼ同じ
+        // 各行のxは中身はPython等で同名変数を上書きするよりは
+        // Rustのシャドーイングの方がしっくりくる。
+
         // CNN層
         let x = self.conv1.forward(xs)?;
         let x = x.relu()?;
         let x = self.conv2.forward(&x)?;
         let x = x.relu()?;
         let x = x.max_pool2d(2)?;
+        // 本サンプルは推論用なのでtrainは直接falseを入れてしまってもよい
         let x = self.dropout1.forward(&x, train)?;
         // 全結合層
         let x = x.flatten(1, 3)?;
